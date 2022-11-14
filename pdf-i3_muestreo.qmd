@@ -1,5 +1,5 @@
 ---
-title: "Interrogación 3 3"
+title: "Interrogación 3"
 subtitle: "EYP2417 - Muestreo"
 format: 
   pdf: 
