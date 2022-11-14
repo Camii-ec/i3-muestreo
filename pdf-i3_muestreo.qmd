@@ -1,0 +1,30 @@
+---
+title: "Interrogación 3 3"
+subtitle: "EYP2417 - Muestreo"
+format: 
+  pdf: 
+    include-in-header: 
+      text: |
+        \usepackage{amsmath}
+        \usepackage{float}
+    colorlinks: true
+    geometry:
+      - top=20mm
+      - left=20mm
+      - right=20mm
+      - heightrounded
+    fig-pos: "H"
+author: 
+  - name: "Camila Echeverría"
+  - name: "Francisca Vilca"
+crossref:
+  fig-title: Figura
+  fig-prefix: Figura
+  tbl-title: Tabla
+  tbl-prefix: Tabla
+tbl-cap-location: bottom
+---
+
+## Pregunta 1
+
+Aravena chúpalo
