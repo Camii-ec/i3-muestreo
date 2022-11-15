@@ -1,0 +1,81 @@
+##Base de datos##
+install.packages("haven")
+install.packages("survey")
+install.packages("jtools")
+install.packages("remotes")
+remotes::install_github("carlganz/svrepmisc")
+install.packages("dplyr")
+
+library("haven")
+library("survey")
+library("jtools")
+library("remotes")
+library("svrepmisc")
+library("dplyr")
+library("rio")
+
+nhanes2012 <- import("nhanes_dataset.XPT")
+
+nhc <- svydesign(id = ~SDMVPSU, weights = ~WTINT2YR, strata = ~SDMVSTRA,
+                 nest = TRUE, survey.lonely.psu = "adjust", data = nhanes2012)
+nhc
+summary(nhc)
+##La variable RIDAGEYR nos indica la edad en años##
+svymean(~RIDAGEYR,nhc)
+cv(svymean(~RIDAGEYR,nhc))
+svyquantile(~RIDAGEYR, design = nhc, na = TRUE, c(.25,.5,.75),ci=TRUE)
+##Obtenemos las medias para hombres y mujeres, 1 = hombre, 2 = mujer##
+svymean(~RIAGENDR == 1,nhc)
+#Intervalo de confianza normal#
+confint(svymean(~RIAGENDR==1,nhc))
+#Intervalo de confianza usando otros métodos#
+svyciprop(~I(RIAGENDR==1), nhc, method="likelihood")
+svyciprop(~I(RIAGENDR==2), nhc, method="li")
+#li es lo mismo que likelihood#
+
+#Ahora usando la función logit usando una logística#
+svyciprop(~I(RIAGENDR==1),nhc, method = "logit")
+svyciprop(~I(RIAGENDR==2),nhc,method = "logit")
+
+#Hay otros métodos que pueden verse en la documentación#
+
+svytotal(~DMDBORN4, design = nhc, na = TRUE)
+cv(svytotal(~DMDBORN4, design = nhc, na = TRUE))
+svytotal(~DMDBORN4, design = nhc, na = TRUE, deff = TRUE)
+
+#Tablas con survey#
+svytable(~RIAGENDR, design = nhc)
+
+#histogramas#
+svyhist(~RIDAGEYR, nhc, probability = FALSE)
+
+base1 <- subset(nhc, RIAGENDR == 2)
+summary(base1)
+svymean(~RIDAGEYR,design = base1)
+
+#Test de independencia#
+svyttest(RIDAGEYR~RIAGENDR==2,nhc)
+
+#Modelo lineal generalizado#
+summary(svyglm(RIDAGEYR~RIAGENDR==2, design=nhc))
+
+
+#Otros ejemplos usando svyglm#
+data(api)
+#diseño estratificado#
+dstrat <- svydesign(id=~1,strata=~stype, weights=~pw, data=apistrat, fpc=~fpc)
+#diseño estratificado ignorando los pesos#
+dstrat <- svydesign(id=~1,strata=~stype,  data=apistrat, fpc=~fpc)
+#por conglomerado de una etapa#
+dclus1 <- svydesign(id=~dnum, weights=~pw, data=apiclus1)
+#por conglomerado en dos etapas#
+dclus2<-svydesign(id=~dnum+snum, fpc=~fpc1+fpc2, data=apiclus2)
+
+#Queremos predecir api2000, esto es "The Academic Performance Index"
+#en base a ell, mobility y meals#
+summary(svyglm(api00 ~ ell + meals + mobility, design = dclus2))
+
+#Algo útil es que podemos hacer subdivisiones, en este caso para el tipo
+#de escuela
+summary(svyglm(api00~stype-1, dclus2))
+svyby(~api00,~stype,dclus2,svymean, keep.var=TRUE)
