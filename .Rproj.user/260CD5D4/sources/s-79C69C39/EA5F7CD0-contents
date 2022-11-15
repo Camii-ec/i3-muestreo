@@ -45,5 +45,4 @@ pesos_pob <- censo_p %>%
                            ifelse(30<= Edad & Edad <=44,2,
                                   ifelse(45<= Edad & Edad <=59, 3,4)))) %>% 
   group_by(Zona, Sexo, cat.edad) %>%
-  summarise(Pob_grupo = sum(Poblacion_2021)) %>% 
-  mutate(Prob_sel_grupo = Pob_grupo/sum(Pob_grupo))
+  summarise(Pob_grupo = sum(Poblacion_2021))
