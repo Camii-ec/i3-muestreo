@@ -1,0 +1,87 @@
+install.packages(c("survey","foreign"))
+library("survey")
+library("foreign")
+
+# Muestreo Estratificado --------------------------------------------------
+data(hospital)
+#Vemos de qué trata nuestra base de datos#
+
+?hospital
+#Para hacer muestreo complejo primero debemos definir el diseño 
+#de muestreo, para esto usamos la función svydesign
+#id = ~1 nos indica que tenemos un muestreo independiente
+#strata seleccionamos los niveles de cuidado obstétrico
+#fpc nos pide el número de pacientes en cada estrato para
+#este caso, lo que encontramos en la variable tothosp
+#weight son los pesos, que se encuentran en weighta
+
+diseno_estr <- svydesign(id =~1, strata = ~oblevel, fpc = ~tothosp,
+                         weight = ~weighta, data = hospital)
+
+#Obtengamos la media de los nacimientos y el total#
+svymean(~births,diseno_estr)
+svytotal(~births,diseno_estr)
+
+#Ahora calculemos la media y total para cada uno de los estratos#
+svyby(~births,~oblevel,diseno_estr,svymean,keep.var=TRUE)
+svyby(~births,~oblevel,diseno_estr,svytotal,keep.var=TRUE)
+
+#Hagamos lo mismo pero con pesos replicados en lugar de los pesos
+#dados por el diseño de muestreo.
+
+diseno_estr_rw <- as.svrepdesign(diseno_estr)
+
+#Obtenemos los mismos estadísticos que en la parte anterior
+svymean(~births,diseno_estr_rw)
+svytotal(~births,diseno_estr_rw)
+svyby(~births,~oblevel,diseno_estr_rw,svymean,keep.var=TRUE)
+svyby(~births,~oblevel,diseno_estr_rw,svytotal,keep.var=TRUE)
+
+#Base de desempleo#
+desempleo <- read.table(textConnection(" id str clu wt ue91 lab91 fpc
+1 1 1 1.75 4123 33786 7
+2 1 2 1.75 666 6016 7
+3 1 4 1.75 760 5919 7
+4 1 6 1.75 457 3022 7
+5 2 21 6.25 61 573 25
+6 2 25 6.25 262 1737 25
+7 2 26 6.25 331 2543 25
+8 2 27 6.25 98 545 25
+"),header = TRUE)
+
+#En este caso dado que la base está dividida en conglomerados
+#le indicamos al svydesign 
+diseno_desempleo <- svydesign(id = ~clu, strata = ~str, weight = ~wt,
+                              fpc = ~fpc, data = desempleo)
+
+#Obtenemos la media y total de personas desempleadas para el año 1991
+svymean(~ue91,diseno_desempleo)
+svytotal(~ue91,diseno_desempleo)
+svyby(~ue91,~str,diseno_desempleo,svymean,keep.var=TRUE)
+svyby(~ue91,~str,diseno_desempleo,svytotal,keep.var=TRUE)
+
+#Obtenemos el estimador de razón entre empleo y desempleo para
+#el año 1991
+svyratio(~ue91,~lab91,diseno_desempleo)
+
+
+# Muestreo por conglomerados ----------------------------------------------
+desempleo_2 <- read.table(textConnection("id str clu wt ue91 lab91
+1 1 2 4 666 6016
+2 1 2 4 528 3818
+3 1 2 4 760 5919
+4 1 2 4 187 1448
+5 1 8 4 129 927
+6 1 8 4 128 819
+7 1 8 4 331 2543
+8 1 8 4 568 4011
+"),header = TRUE)
+
+diseno_desempleo2 <- svydesign(id = ~clu,weight= ~wt, fpc = rep(32,8),
+                               data = desempleo_2)
+
+svytotal(~ue91+lab91,diseno_desempleo2)
+svyratio(~ue91,~lab91,diseno_desempleo2)
+diseno_desempleo3 <- as.svrepdesign(diseno_desempleo2)
+svytotal(~ue91+lab91,diseno_desempleo3)
+svyratio(~ue91,~lab91,diseno_desempleo3)
